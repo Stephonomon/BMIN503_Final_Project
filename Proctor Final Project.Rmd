@@ -1,0 +1,259 @@
+---
+title: "BMIN503/EPID600 Final Project"
+author: "Stephon Proctor, PhD, ABPP"
+output: 
+  html_document:
+    theme: paper 
+    highlight: tango
+bibliography: references.bib
+---
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 400)
+```
+
+### Overview
+
+Give a brief a description of your project and its goal(s), what data you are using to complete it, and what three faculty/staff in different fields you have spoken to about your project with a brief summary of what you learned from each person. Include a link to your final project GitHub repository.
+
+[Link to Project on Github](https://github.com/Stephonomon/BMIN503_Final_Project)
+
+### Introduction
+
+According to national surveys, as many as one in six U.S. children between the ages of 6 and 17 has a treatable mental health disorder[@Whitney2019]. For many parents of children struggling with behavioral health needs, taking their child to the emergency department (ED) may be their first contact and last resort to access behavioral health services. However, emergency departments are not well suited to meet behavioral service needs. The increased need for behavioral health services nationally is outpacing the rate of available behavioral health providers. As such, children who present to the ED with behavioral health needs are susceptible to prolonged length of stays (LOS) with some studies showing longer LOS than patients without behavioral health conditions[@Case2011].
+
+Several studies have examined the relationship between patient and hospital characteristics and LOS, but to date, none have examined the additional influence of within-ED behavioral health actions and decisions on LOS [@Chakravarthy2017; @Nash2021; @Case2011].
+
+This project will include patient factors, but also factors that are related to the activities of ED physicians and consulting behavioral health providers. Identifying and understanding the relative impact of these factors may help with triaging and disposition decisions to reduce LOS. This reduction may not necessarily lead to a more immediate implementation of behavioral health services, but it could still improve patient satisfaction, ED throughput, and lower costs.
+
+This project is interdisciplinary due to the collaboration between medical ED providers and staff and behavioral health providers. Patients with behavioral health conditions are present everywhere within a hospital, but their main points of entry are: directly with a behavioral health department or indirectly through primary care and the emergency department. For the latter, this means such patients are requesting assistance from providers who are not specifically trained in assessing or managing patients with behavioral health conditions. On the other hand, behavioral health providers may be less likely to have experience working with patients with high acuity or comorbid medical conditions. My discussions with colleagues have provided me with information about the range of factors that need to be considered in determining what in hospital and outside of the hospital services are used to help patients during their admission. CHOP has an outdated dashboard with a few relevant factors, but it is outdated and has not incorporated recent developments in tracking data about these patients.
+
+### Methods
+The cohort for this analysis is ED admissions for patients at the CHOP. Data were queried from CHOP's data warehouse (CDW), which is built from data stored in the EPIC EHR.
+
+Admissions were included in this analysis based on:
+
+-   Patient being between 5 and 18 years old at the time of the ED admission.
+
+-   Having at least one "behavioral health" type of contact or characteristics indicating the purpose of the admission was for a behavioral health concern.
+
+### Results
+
+
+```{r setup, include=FALSE}
+# Prevent code chunks from printing text, useful for cleaning up an analysis for presentation
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(rocqi)
+library(tidyverse)
+library(networkD3)
+library(formattable)
+library(ggplot2)
+library(ggalluvial)
+library(gtsummary)
+library(forcats)
+library(whereiation)
+
+```
+
+```{r, get data}
+## Get data from the CDW
+ed_encs_raw <- run_sql("select * from marts_dev.proctors.bh_ed_encs", dsn = "CDWUAT", lowercase_names = TRUE)
+
+
+## Start data prep by recoding indicators and lumping factors with values that are low in frequency.
+df <- ed_encs_raw %>%
+  filter(age_at_visit <= 18) %>% 
+  mutate_at(vars(ends_with("ind") & !starts_with("mychop")), ~(recode_factor(., "1" = "1", "0" = "0", .missing = "0"))) %>% #take all of the indicators and make the missing zeros. Due to how this was not set within the SQL
+  mutate(
+    mychop_activation_ind = recode_factor(mychop_activation_ind, "1" = "Active", "0" = "Inactive"),
+    sex = recode_factor(sex, M = "Male", F = "Female", U = "Unknown"),
+    payor_group = as.factor(str_to_title(payor_group)),
+    ed_discharge_disposition =
+      case_when(
+        str_detect(ed_dispo_ept, "Psychiatric") ~ "Psychiatry Facility",
+        TRUE ~ ed_dispo_ept),
+    ed_los_hrs_cat = if_else(ed_los_hrs > 6, "ED LOS > 6", "ED LOS < 6"),
+    ed_discharge_disposition = fct_lump_prop(ed_discharge_disposition, 0.01), 
+    preferred_language = fct_lump_n(preferred_language, 2),
+    location_at_discharge = event_1
+  ) 
+
+
+## Name columns that we will turn to factors
+cols <- c('ed_discharge_disposition', 'pediatric_age_days_group', 'sex', 'race', 'ethnicity', 'payor_group', 'event_1', 'diagnosis_grouping', 'prim_bh_dx_cat', 'ed_los_hrs_cat', 'bhs_depression_score', 'combined_dispo', 'preferred_language', 'location_at_discharge')
+
+df[cols] <- lapply(df[cols], as.factor) 
+
+
+# Bring in ED and IP disposition columns that are not yet in the CDW and join them to the main cohort.
+# df_clarity <- read.csv("clarity_ed_ip_dispos.csv") %>%
+#   rename(csn = PAT_ENC_CSN_ID)
+# 
+# names(df_clarity) <- tolower(names(df_clarity))
+# 
+# df_joined <- df %>%
+#   left_join(df_clarity, by = "csn")
+
+# clipr::write_clip(df_min)
+
+```
+
+## Patient Characteristics
+
+Summary of demographic and other patient-level characteristics.
+
+```{r}
+
+pat_chars <- c('pediatric_age_days_group', 'sex', 'race', 'ethnicity', 'preferred_language', 'payor_group', 'mychop_activation_ind')
+
+df_char_summary <- df %>% 
+  select(pat_chars, ed_los_hrs_cat)
+
+df_char_summary %>% 
+  rename_all(nice_display_names) %>%
+  tbl_summary(
+    by = 'ED LOS Hrs Cat',
+    statistic = list(all_continuous() ~ "{mean} ({sd})",
+                     all_categorical() ~ "{n} / {N} ({p}%)"),
+    digits = all_continuous() ~ 2,
+    sort = list(everything() ~ "frequency"), missing = "no", label = list("Pediatric Age Days Group" ~ "Age Group")) %>% add_p()
+
+```
+
+## ED Characteristics
+
+```{r}
+
+ed_chars <- c('psych_emergency_ind', 'alerted_mental_stat_ind', 'mh_cc_ind', 'hr_72_revisit_ind', 'ed_discharge_disposition', 'location_at_discharge', 'ed_los')
+
+
+df_ed_chars_summary <- df %>% 
+  select(ed_chars, ed_los_hrs_cat)
+  
+df_ed_chars_summary %>% 
+  
+  #rename_all(nice_display_names) %>%
+  #format_data_frame()  %>% 
+  format_data_frame(recode_indicators = indicator_values(
+    if_1 = "Yes",
+    if_0 = "No",
+    if_na = NA_character_
+  )) %>%
+  tbl_summary(
+        by = 'ED LOS Hrs Cat',
+        statistic = list(all_continuous() ~ "{mean} ({sd})",
+                     all_categorical() ~ "{n} / {N} ({p}%)"),
+    digits = all_continuous() ~ 2,
+    
+    sort = list(everything() ~ "frequency"), label = list("Location At Discharge" ~ "Patient Location at Discharge", "Mh Cc" ~ "Mental Health Category Chief Complaint", "Alerted Mental Stat" ~ "Altered Mental Status Chief Complaint" , "Hr 72 Revisit" ~ "Patient Revisited within 72 Hours", "Psych Emergency" ~ "Psychiatric Emergency Chief Complaint") ) %>% add_p()
+
+#footnote = AMA= against medical advice;
+
+```
+
+## Diagnosis Characteristics
+
+```{r}
+
+dx_chars <- c('prim_bh_dx_cat', 'diagnosis_grouping', 'complex_chronic_condition_ind', 'medically_complex_ind')
+
+df_dx_chars_summary <- df %>% 
+  select(dx_chars, ed_los_hrs_cat)
+
+
+df_dx_chars_summary %>% 
+  mutate(diagnosis_grouping = fct_lump_n(diagnosis_grouping, 10), 
+         prim_bh_dx_cat = recode_factor(prim_bh_dx_cat, "non_bh_diagnosis" = "Non Behavioral Health Diagnosis", "bh_diagnosis" = "Behavioral Health Diagnosis")
+) %>%
+  #rename_all(nice_display_names) %>%
+  format_data_frame(recode_indicators = indicator_values(
+    if_1 = "Yes",
+    if_0 = "No",
+    if_na = NA_character_
+  )) %>% 
+  tbl_summary(
+    by = 'ED LOS Hrs Cat',
+    statistic = list(all_continuous() ~ "{mean} ({sd})",
+                     all_categorical() ~ "{n} / {N} ({p}%)"),
+    digits = all_continuous() ~ 2,
+    sort = list(everything() ~ "frequency"), missing = "no"
+              , label = list("Prim Bh Dx Cat" ~ "Primary Diagnosis Type", "Diagnosis Grouping" ~ "Top 10 Diagnosis Categories")
+              ) %>% add_p()
+
+```
+
+## Behavioral Health Contact Characteristics
+
+A summary of the the behavioral health-related interventions that were documented during a patient's admission.
+
+```{r}
+
+bh_interven <- c('bhs_depression_score', 'hx_mh_note_ind', 'psych_tech_note_ind', 'dispo_sde_ind', 'bhip_consult_ind', 'bhs_ind', 'safety_order_ind', 'medical_clearance_ind', 'med_intervention_ind', 'combined_dispo')
+
+df_bh_interven_summary <- df %>% 
+  select(bh_interven, ed_los_hrs_cat)
+  
+  
+df_bh_interven_summary %>% format_data_frame(recode_indicators = indicator_values(
+    if_1 = "Yes",
+    if_0 = "No",
+    if_na = NA_character_
+  )) %>% 
+  tbl_summary(
+        by = 'ED LOS Hrs Cat',
+        statistic = list(all_continuous() ~ "{mean} ({sd})",
+                     all_categorical() ~ "{n} / {N} ({p}%)"),
+    digits = all_continuous() ~ 2,
+        sort = list(everything() ~ "frequency")
+  ) %>% add_p()
+
+```
+
+# Length of Stay Analysis
+
+```{r}
+
+  spc(df, x = ed_admit_date, y = ed_los_hrs, chart = "xbar", title = "Mean Length of Stay", xlab = "Month Year", ylab = "Hours", agg.fun = "mean")
+
+
+#spc(df, x = ed_admit_date, y = ed_los_hrs, chart = "i", title = "Median Length of Stay", xlab = "Month Year", ylab = "Hours", agg.fun = "median")
+
+#spc(df, x = ed_admit_date, y = ed_los_hrs, chart = "i", period = NULL)
+
+
+#percent of sample by date
+
+## EDECU
+#spc(df, x = ed_admit_date, y = edecu_los_hrs, chart = "xbar", title = "Median Length of Stay", xlab = "Month Year", ylab = "Hours", agg.fun = "median")
+
+
+```
+
+Predictors of Extended Stays
+
+I used LOS (Length of Stay) as a continuous and a dichotomous variable. In my review of the literature, some studies defined prolonged LOS as over 4 hours, while others set it at over 6 hours.
+
+The following chart displays our predictors in a graphical form to help identify which predictors may be helpful in predictive statistical analyses.
+
+```{r whereiation}
+
+
+df_pred_los <- df %>%
+  select(pat_chars, dx_chars, ed_chars, bh_interven, ed_los_hrs, -ed_los) #%>%
+  #rename_all(nice_display_names) 
+
+plot_spread(df_pred_los, dep_var =  "ed_los_hrs")
+
+#plot_spread_interactive(df_pred_los, "ed_los_hrs")
+
+df_w_summary <- summarize_factors_all_fields(df_pred_los, dep_var = "ed_los_hrs", return = "list")
+
+#df_w_summary_sig <- df_w_summary$data
+
+df_w_summary_sig <- df_w_summary_sig %>%
+  filter(field_p_value < .10)
+df_w_summary$data$field_p_value
+
+```
+
