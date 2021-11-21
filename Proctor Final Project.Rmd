@@ -15,13 +15,13 @@ bibliography: references.bib
 options(width = 400)
 ```
 
-### Overview
+# Overview
 
 This project will examine the factors related to the length of stay for pediatric patients with behavioral health concerns in the CHOP emergency department.
 
-Staff involved on a consultation basis are ED Psychiatirst, Andi Fu, MD, ED Physician, Jeremey Espositio, MD, and ED Physician and Director of Emergency Information Systems, Joeseph Zorc, MD.
+Staff involved on a consultation basis are ED Psychiatrist, Andi Fu, MD, ED Physician, Jeremy Espositio, MD, and ED Physician and Director of Emergency Information Systems, Joseph Zorc, MD.
 
-### Introduction
+## Introduction
 
 According to national surveys, as many as one in six U.S. children between the ages of 6 and 17 has a treatable mental health disorder[@Whitney2019]. For many parents of children struggling with behavioral health needs, taking their child to the emergency department (ED) may be their first contact and last resort to access behavioral health services. However, emergency departments are not well suited to meet behavioral service needs. The increased need for behavioral health services nationally is outpacing the rate of available behavioral health providers. As such, children who present to the ED with behavioral health needs are susceptible to prolonged length of stays (LOS) with some studies showing longer LOS than patients without behavioral health conditions[@Case2011].
 
@@ -29,9 +29,9 @@ Several studies have examined the relationship between patient and hospital char
 
 This project will include demographic, emergency department, and behavioral health activity factors. Identifying and understanding the relative impact of these factors may help with triaging and disposition decisions to reduce LOS. This reduction may not necessarily lead to a more immediate implementation of behavioral health services, but it could still improve patient satisfaction, ED throughput, and lower costs.
 
-This project is interdisciplinary due to the collaboration between medical ED providers and staff and behavioral health providers. Patients with behavioral health conditions are present everywhere within a hospital, but their main points of entry are: directly with a behavioral health department or indirectly through primary care and the emergency department. For the latter, this means such patients are requesting assistance from providers who are not specifically trained in assessing or managing patients with behavioral health conditions. On the other hand, behavioral health providers may be less likely to have experience working with patients with high acuity or comorbid medical conditions. My discussions with colleagues have provided me with information about the range of factors that need to be considered in determining what in hospital and outside of the hospital services are used to help patients during their admission. CHOP has an outdated dashboard with a few relevant factors, but it is outdated and has not incorporated recent developments in tracking data about these patients.
+This project is interdisciplinary due to the collaboration between medical ED providers and staff and behavioral health providers. Patients with behavioral health conditions are present everywhere within a hospital, but their main points of entry are: directly with a behavioral health department or indirectly through primary care and the emergency department. For the latter, this means such patients are requesting assistance from providers who are not specifically trained in assessing or managing patients with behavioral health conditions. On the other hand, behavioral health providers may be less likely to have experience working with patients with high acuity or co-morbid medical conditions. My discussions with colleagues have provided me with information about the range of factors that need to be considered in determining what in hospital and outside of the hospital services are used to help patients during their admission. CHOP has an outdated dashboard with a few relevant factors, but it is outdated and has not incorporated recent developments in tracking data about these patients.
 
-# Goals
+## Goals
 
 -   To examine demographic and clinical risk factors associated to length of stay (LOS) and prolonged LOS (\>= 24 hrs).
 -   To illustrate dispositions recommended by the CHOP behavioral health and social work teams.
