@@ -3,17 +3,14 @@ title: "BMIN503/EPID600 Final Project"
 author: "Stephon Proctor, PhD, ABPP"
 output: 
   html_document:
-    theme: paper 
+    css: https://github.research.chop.edu/pages/CQI/chop-bootstrap/bootstrap-3/bootstrap.min.css
     highlight: tango
     toc: yes
     toc_float: yes
-s    toc_depth: 4
+    toc_depth: 4
+    code_folding: hide
 bibliography: references.bib
 ---
-
-```{r set-options, echo=FALSE, cache=FALSE}
-options(width = 400)
-```
 
 # Overview
 
@@ -62,7 +59,7 @@ To identify risk factors associated with prolonged LOS, we conducted logistic re
 
 ```{r setup, include=FALSE}
 # Prevent code chunks from printing text, useful for cleaning up an analysis for presentation
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 library(rocqi)
 library(tidyverse)
