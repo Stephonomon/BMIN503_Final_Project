@@ -1,5 +1,5 @@
 ---
-title: "BMIN503/EPID600 Final Project Predicting Pediatric ED Length of Stays"
+title: "BMIN503/EPID600 Final Project - Predicting Pediatric ED Length of Stays"
 author: "Stephon Proctor, PhD, ABPP"
 output: 
   html_document:
@@ -20,7 +20,7 @@ Staff involved on a consultation basis are ED Psychiatrist Andi Fu, ED Physician
 
 ## Introduction
 
-According to national surveys, as many as one in six U.S. children between the ages of 6 and 17 has a treatable mental health disorder [@Whitney2019]. For many parents of children struggling with behavioral health needs, taking their child to the emergency department (ED) may be their first contact and last resort to access behavioral health services. However, emergency departments are not well suited to meet behavioral service needs. The increased need for behavioral health services nationally is outpacing the rate of available behavioral health providers. As such, children who present to the ED with behavioral health needs are susceptible to prolonged length of stays (LOS) with some studies showing longer LOS than patients without behavioral health conditions [@Case2011].
+According to national surveys, as many as one in six U.S. children between the ages of 6 and 17 has a treatable mental health disorder [@Whitney2019]. For many parents of children struggling with behavioral health needs, taking their child to the emergency department (ED) may be their first contact and last resort to access behavioral health services. However, emergency departments are not well suited to meet behavioral service needs. The increased need for behavioral health services nationally is outpacing the rate of available behavioral health providers. As such, children who present to the ED with behavioral health needs are susceptible to prolonged length of stays (LOS) with some studies showing longer LOS than patients without behavioral health conditions[@Case2011].
 
 Several studies have examined the relationship between patient and hospital characteristics and LOS, but to date, none have examined the additional influence of within-ED behavioral health actions and decisions on LOS [@Chakravarthy2017; @Nash2021; @Case2011].
 
@@ -37,7 +37,7 @@ This project is interdisciplinary due to the collaboration between medical ED pr
 
 The cohort for this analysis is patients with mental health emergencies seen in the CHOP Emergency Department (ED and EDECU - Emergency Department Extended Care Unit). Data were queried from CHOP's data warehouse (CDW), which is built from data stored in the EPIC EHR.
 
-    -   Admissions were included in this analysis based on:
+-   Admissions were included in this analysis based on:
 
     -   Admissions occurring from 2020 to the present.
 
@@ -113,6 +113,7 @@ df <- ed_encs_raw %>%
     race = fct_lump_n(race, 5),
     primary_bh_diagnosis_name = fct_lump_n(primary_bh_diagnosis_name, 10),
     primary_medical_diagnosis_name = fct_lump_n(primary_medical_diagnosis_name, 5),
+    ed_discharge_destination = fct_lump_n(ed_discharge_destination, 5),
     ed_arrival_mode = fct_lump_n(ed_arrival_mode, 5),
     ed_psych_discharge_location = fct_lump(ed_psych_discharge_location, 10),
     race_ethnicity = fct_lump(race_ethnicity, 5),
@@ -298,10 +299,7 @@ grid.arrange(los_ed_hrs_histogram_log, los_ed_hrs_histogram_log, los_ed_hrs_hist
 
 Demographic and other patient-level characteristics.
 
-*Summary Highlights: Most patients are females above the age of 13, and
-are non-hispanic blacks. In addition, most patients are from
-Philadelphia, are primarily English speaking and have Medical
-Assistance.*
+*Summary Highlights: Most patients are females above the age of 13, and are non-hispanic blacks. In addition, most patients are from Philadelphia, are primarily English speaking and have Medical Assistance.*
 
 ```{r patient-characteristics}
 ## Create an easy to re-use column grouping
@@ -351,15 +349,9 @@ tbl_final
 
 ### ED Characteristics
 
-These include factors determined at the beginning or end of the
-admission.
+These include factors determined at the beginning or end of the admission.
 
-*Summary Highlights: Most patients arrive during the day, during the
-school months, and via cars. The most prevalent chief complaint is
-"Psych Emergency" or other chief complaints with mental health types of
-labels. The Majority of patients are discharged home from the ED. The
-most common inpatient Psychiatry Discharge setting is Fairmount,
-followed by Belmont.*
+*Summary Highlights: Most patients arrive during the day, during the school months, and via cars. The most prevalent chief complaint is "Psych Emergency" or other chief complaints with mental health types of labels. The Majority of patients are discharged home from the ED. The most common inpatient Psychiatry Discharge setting is Fairmount, followed by Belmont.*
 
 ```{r ed-characteristics}
 
@@ -410,15 +402,9 @@ tbl_final2
 
 ### Diagnosis Characteristics
 
-These include diagnosis groups for behavioral health and non-behavioral
-health conditions.
+These include diagnosis groups for behavioral health and non-behavioral health conditions.
 
-*Summary Highlights: The majority of patients have a primary diagnoses
-involving a behavioral health condition. Among the behavioral health
-diagnoses, suicidal ideation/self-injury are the most prevalent,
-followed by aggression, agitation, and anger, eating disorders, and
-substance use disorders. Most patients do not have a complex chronic
-condition and are not medically complex.*
+*Summary Highlights: The majority of patients have a primary diagnoses involving a behavioral health condition. Among the behavioral health diagnoses, suicidal ideation/self-injury are the most prevalent, followed by aggression, agitation, and anger, eating disorders, and substance use disorders. Most patients do not have a complex chronic condition and are not medically complex.*
 
 ```{r diagnostic-characteristics}
 
@@ -469,16 +455,9 @@ tbl_final3
 
 ### Behavioral Health Activity Characteristics
 
-A summary of the behavioral health-related activities that were documented during a patient’s admission. Includes mental health screenings, notes documented, medications, safety orders, and clinical dispositions.
+A summary of the behavioral health-related activities that were documented during a patient's admission. Includes mental health screenings, notes documented, medications, safety orders, and clinical dispositions.
 
-*Summary Highlights: For behavioral health assessments, severe
-depression was the most common score on the BHS for those who had a
-history of suicidal ideation. on the ASQ, suicidal ideation was more
-common than suicide attempts. The most common discharged disposition by
-the mental health team was to outpatient therapy. Use of medications and
-safety orders were not common within the cohort. Of the orders,
-searching patients for risk of self-harm and visual observations were
-the most common.*
+*Summary Highlights: For behavioral health assessments, severe depression was the most common score on the BHS for those who had a history of suicidal ideation. on the ASQ, suicidal ideation was more common than suicide attempts. The most common discharged disposition by the mental health team was to outpatient therapy. Use of medications and safety orders were not common within the cohort. Of the orders, searching patients for risk of self-harm and visual observations were the most common.*
 
 ```{r}
 
@@ -582,15 +561,31 @@ plot_spread(df_pred_los_no_dispos, dep_var =  "total_ed_hrs")
 
 For a given predictor variable, the coefficient (Beta) can be interpreted as the average effect on y of a one-unit increase in the predictor (LOS), holding all other predictors fixed.
 
-Significant values are in **bold**. Variables with multiple levels are
-in comparison to the first value (Reference --). Thus, the values after
-it are in comparison to that Reference.
+Significant values are in **bold**. Variables with multiple levels are in comparison to the first value (Reference --). Thus, the values after it are in comparison to that Reference.
 
 For example, a positive beta value would mean that there is an increase in LOS hours of the x LOS hours ( beta value) for that level in comparison to the Reference level.
 
 #### Univariate Regression
 
 The influence of each variable on its own. This is similar to the graph above but allows for the examination of different levels within variables.
+
+*Key Findings: Total Length of Stay was greater for*
+
+-   Patients over 9 compared to Patients under 9
+
+-   Female patients compared to Male
+
+-   Non-Hispanic black compared to Non-Hispanic White
+
+-   Medical Assistance compared to Commercial insurance
+
+-   Mental Health Diagnosis compared to Medical Diagnosis
+
+-   Severe Depression compared to Mild Depression
+
+-   Medication ordered compared to Not ordered
+
+-   Safety procedures ordered compared to Not ordered
 
 ```{r univariate-regression}
 
@@ -624,6 +619,22 @@ df_pat_lm %>%
 
 Analyzing the influence of all of the variables together on LOS.
 
+*Key Findings: Total Length of Stay was greater for*
+
+-   Patients 9-12 compared to Patients 5-8
+
+-   Non-Hispanic black compared to Non-Hispanic White
+
+-   Bucks, Delaware, Montgomery County compared to Philadelphia
+
+-   Medical Assistance compared to Commercial Insurance
+
+-   Mental Health Diagnosis compared to Medical Diagnosis
+
+-   Not ordering safety procedures compared to Ordering
+
+-   Ordering specific medications compared to Not ordering
+
 ```{r multivariate-regression}
 
 lm_full_model <- lm(total_ed_hrs ~ ., data = df_pat_lm)
@@ -647,17 +658,15 @@ lm_full_model %>%
 Predicting prolonged LOS from the variables selected for analysis. Interpreting the Odds Ratio (OR) means that positive values indicate a higher likelihood that the variable has a higher chance of having a prolonged length of stay.
 
 **Findings:**\
-Being a female patient and Non-Hispanic Blacks were associated with prolonged length of stays in comparison to male and Non-Hispanic White patients.  
+Being a female patient and Non-Hispanic Blacks were associated with prolonged length of stays in comparison to male and Non-Hispanic White patients.
 
-Having a primary diagnosis that was behavioral health was associated with prolonged length of stays. among the behavioral health diagnoses, conditions such as anxiety, substance use, and aggression, agitation, and anger were associated with longer length of stays in comparison to medical diagnosis. This is consistent with the findings that having a chief complaint of psych emergency or a general mental health chief complaint was associated with prolonged length of stays.  
+Having a primary diagnosis that was behavioral health was associated with prolonged length of stays. Among the behavioral health diagnoses, conditions such as anxiety, substance use, and aggression, agitation, and anger were associated with longer length of stays in comparison to medical diagnosis. This is consistent with the findings that having a chief complaint of psych emergency or a general mental health chief complaint was associated with prolonged length of stays.
 
-Arriving at the ED in the evening and overnight were associated with prolonged length of stays in comparison to arrivals earlier in the day.  
-  
-  
-Among the safety orders available, having any of the safety orders except for restraints was associated with a longer length of stay.  
+Arriving at the ED in the evening and overnight were associated with prolonged length of stays in comparison to arrivals earlier in the day.
+
+Among the safety orders available, having any of the safety orders except for restraints was associated with a longer length of stay.
 
 Medications ordered did not have a significant association, nor did depression scores or suicidal ideation levels.
-
 
 ```{r logistic-regression}
 df_pat_glm <- df %>%
@@ -681,8 +690,7 @@ glm_full_model %>%
   italicize_levels() %>%
   modify_caption("**Logistic Regression: Predictors of Prolonged Length of Stay**") %>%
   modify_header(label ~ "**Variable**") %>%
-  add_significance_stars(hide_ci = FALSE, hide_p = FALSE) %>%
-  add_glance_source_note()
+  add_significance_stars(hide_ci = FALSE, hide_p = FALSE) 
 
 
 ```
@@ -874,6 +882,6 @@ df_ip_psych_transfer %>%
 
 -   **Medically Complex:** Indicates whether a patient is listed as medically complex, which is either two complex chronic conditions, or one CCC and is reported as technology dependent.
 
--   **Complex Chronic Condition:** Indicates whether a patient has a complex chronic condition (CCC) based on specific diagnoses on their problem list, or if they have a specific visit diagnosis made in the past year. CCCs are grouped in to the following categories based on organ group - Hemotology, Renal, GI, Malignancy, Neontal, Congenital Genetics, Respiratory, Cardiovascular Disease, and Neurmuscular. List maintained by Population Health Group
+-   **Complex Chronic Condition:** Indicates whether a patient has a complex chronic condition (CCC) based on specific diagnoses on their problem list, or if they have a specific visit diagnosis made in the past year. CCCs are grouped in to the following categories based on organ group - Hematology, Renal, GI, Malignancy, Neonatal, Congenital Genetics, Respiratory, Cardiovascular Disease, and Neuromuscular.
 
-# **Bibliography**
+# Bibliography
