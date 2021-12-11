@@ -695,6 +695,25 @@ glm_full_model %>%
 
 ```
 
+```{r odds-ratio-graph, fig.height=20, fig.width=10, warning=FALSE}
+library(sjPlot)
+
+plot_model(glm_full_model, sort.est = TRUE, show.values = TRUE, value.offset = .4,  transform = NULL, type = "est") + theme_chop() 
+
+```
+
+# Conclusions
+
+Patient factors are related to length of stay, consistent with the literature: Age, Race Ethnicity, Sex, and Insurance .
+
+Suggests further analysis for whether there are socioeconomic disparities and what ED practices may contribute to them.
+
+ED factors and clinical activities had some influence as well Consultation with psychiatry and needing safety orders suggests likely higher acuity and intervention needed.
+
+Next steps Consider using predictive modeling techniques Varying prolonged LOS cutoffs.
+
+Limitations: Lots of missing data as not all factors are consistently measured. Limited the ability to do predictive analyses.
+
 ## Supplemental Analyses
 
 Extra analyses for my curiosity.
